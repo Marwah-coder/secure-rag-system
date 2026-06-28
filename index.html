@@ -529,9 +529,7 @@
 
 <script>
   // ===== CONFIG =====
-  // Local test ke liye: http://127.0.0.1:8000/ask
-  // Deploy hone ke baad: apni Render URL yahan daalo, e.g. https://your-app.onrender.com/ask
-  const API_URL = "http://127.0.0.1:8000/ask";
+  const API_URL = window.location.origin + "/ask";
 
   let queryCount = 0;
   let blockedCount = 0;
