@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NovaTech HR Assistant — Secure RAG System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B1220;
+    --bg-elevated: #121B2E;
+    --bg-card: #16213A;
+    --border: #243150;
+    --text-primary: #F4F6FA;
+    --text-secondary: #8B97B0;
+    --text-muted: #5B6781;
+    --accent: #2DD4BF;
+    --accent-dim: #1B8C7E;
+    --accent-glow: rgba(45, 212, 191, 0.15);
+    --warn: #F59E0B;
+    --warn-glow: rgba(245, 158, 11, 0.12);
+    --danger: #EF4444;
+    --danger-glow: rgba(239, 68, 68, 0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(45,212,191,0.06) 0%, transparent 45%),
+      radial-gradient(circle at 85% 100%, rgba(45,212,191,0.04) 0%, transparent 40%);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(11, 18, 32, 0.85);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .brand { display: flex; align-items: center; gap: 12px; }
+
+  .brand-mark {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    color: #06241F;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .brand-text h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .brand-text p {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  .status-pill {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 14px 6px 10px;
+  }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ---------- Layout ---------- */
+  .layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    max-width: 1180px;
+    width: 100%;
+    margin: 0 auto;
+    gap: 28px;
+    padding: 28px 32px 40px;
+  }
+
+  @media (max-width: 880px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { order: -1; }
+  }
+
+  /* ---------- Chat column ---------- */
+  .chat-shell {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    min-height: 560px;
+  }
+
+  .chat-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    scroll-behavior: smooth;
+  }
+
+  .chat-scroll::-webkit-scrollbar { width: 6px; }
+  .chat-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+  .intro {
+    text-align: center;
+    margin: auto 0;
+    padding: 0 20px;
+  }
+
+  .intro-icon {
+    width: 52px; height: 52px;
+    margin: 0 auto 18px;
+    border-radius: 14px;
+    background: var(--accent-glow);
+    border: 1px solid rgba(45,212,191,0.3);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .intro h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 19px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .intro p {
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    max-width: 360px;
+    margin: 0 auto 22px;
+    line-height: 1.6;
+  }
+
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .suggestion-chip {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    padding: 8px 14px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+
+  .suggestion-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .msg-row { display: flex; gap: 12px; max-width: 100%; }
+  .msg-row.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .avatar.bot { background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(45,212,191,0.3); }
+  .avatar.user { background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border); }
+
+  .bubble {
+    max-width: 72%;
+    padding: 13px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .msg-row.bot .bubble {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+  }
+
+  .msg-row.user .bubble {
+    background: rgba(45, 212, 191, 0.1);
+    border: 1px solid rgba(45, 212, 191, 0.25);
+    border-top-right-radius: 4px;
+    color: #E4F8F5;
+  }
+
+  .bubble.blocked {
+    background: var(--danger-glow);
+    border: 1px solid rgba(239,68,68,0.3);
+  }
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 9px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .meta-row span { display: flex; align-items: center; gap: 4px; }
+
+  /* ---------- Trace (signature element) ---------- */
+  .trace {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  .trace-step {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 10px;
+    border-radius: 7px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+  }
+
+  .trace-step.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .trace-step.warn-active {
+    border-color: var(--warn);
+    color: var(--warn);
+    background: var(--warn-glow);
+  }
+
+  .trace-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .trace-arrow { color: var(--text-muted); font-size: 10px; }
+
+  /* ---------- Typing indicator ---------- */
+  .typing-dots { display: flex; gap: 4px; padding: 4px 0; }
+  .typing-dots span {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    animation: bounce 1.3s infinite ease-in-out;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-4px); opacity: 1; } }
+
+  /* ---------- Input bar ---------- */
+  .input-bar {
+    padding: 18px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    background: var(--bg-elevated);
+  }
+
+  .input-bar input {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.18s ease;
+  }
+
+  .input-bar input:focus { border-color: var(--accent); }
+  .input-bar input::placeholder { color: var(--text-muted); }
+
+  .send-btn {
+    width: 46px; height: 46px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #06241F;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.18s ease;
+  }
+
+  .send-btn:hover { background: #4ee0cc; transform: translateY(-1px); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+  .panel {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .panel-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .stack-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+  .stack-item:last-child { border-bottom: none; }
+  .stack-item .label { color: var(--text-secondary); }
+  .stack-item .value {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    font-size: 11.5px;
+    background: var(--accent-glow);
+    padding: 2px 8px;
+    border-radius: 5px;
+  }
+
+  .guard-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .guard-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .guard-check {
+    width: 16px; height: 16px;
+    border-radius: 5px;
+    background: var(--accent-glow);
+    color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-size: 10px;
+  }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .stat-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .stat-label {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .footer-credit {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 16px 0 6px;
+  }
+
+  .footer-credit a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">N</div>
+    <div class="brand-text">
+      <h1>NovaTech HR Assistant</h1>
+      <p>Secure RAG · Internal Knowledge Base</p>
+    </div>
+  </div>
+  <div class="status-pill">
+    <span class="status-dot"></span>
+    System Online
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- Chat column -->
+  <div class="chat-shell">
+    <div class="chat-scroll" id="chatScroll">
+      <div class="intro" id="introBlock">
+        <div class="intro-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L3 7V12C3 16.5 6.5 20.5 12 22C17.5 20.5 21 16.5 21 12V7L12 2Z" stroke="#2DD4BF" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M9 12L11 14L15.5 9.5" stroke="#2DD4BF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2>Ask about HR policy</h2>
+        <p>Answers are grounded in the employee handbook only. Every question passes through a security check before retrieval.</p>
+        <div class="suggestions">
+          <div class="suggestion-chip" onclick="askSuggestion(this)">How many annual leave days do I get?</div>
+          <div class="suggestion-chip" onclick="askSuggestion(this)">What's the remote work policy?</div>
+          <div class="suggestion-chip" onclick="askSuggestion(this)">Resignation notice period?</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <input type="text" id="userInput" placeholder="Ask about leave, remote work, conduct, benefits…" onkeydown="if(event.key==='Enter') sendMessage()">
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 11L21 3L14 21L11 13L3 11Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="panel">
+      <div class="panel-title">⚙ Pipeline</div>
+      <div class="stack-item"><span class="label">Embeddings</span><span class="value">MiniLM-L6</span></div>
+      <div class="stack-item"><span class="label">Vector DB</span><span class="value">Qdrant</span></div>
+      <div class="stack-item"><span class="label">LLM</span><span class="value">GPT-OSS-120B</span></div>
+      <div class="stack-item"><span class="label">Framework</span><span class="value">FastAPI</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">🛡 Guardrails Active</div>
+      <div class="guard-list">
+        <div class="guard-item"><span class="guard-check">✓</span> Prompt injection detection</div>
+        <div class="guard-item"><span class="guard-check">✓</span> Harmful content filtering</div>
+        <div class="guard-item"><span class="guard-check">✓</span> Context-grounded generation only</div>
+        <div class="guard-item"><span class="guard-check">✓</span> Honest refusal when unsure</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">📊 Session</div>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-num" id="queryCount">0</div>
+          <div class="stat-label">Queries</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="blockedCount">0</div>
+          <div class="stat-label">Blocked</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-credit">
+  Built by <a href="#" target="_blank">Marwa Naseem</a> · Secure RAG with evaluation pipeline · <a href="#" target="_blank">View on GitHub</a>
+</div>
+
+<script>
+  // ===== CONFIG =====
+  // Local test ke liye: http://127.0.0.1:8000/ask
+  // Deploy hone ke baad: apni Render URL yahan daalo, e.g. https://your-app.onrender.com/ask
+  const API_URL = "http://127.0.0.1:8000/ask";
+
+  let queryCount = 0;
+  let blockedCount = 0;
+
+  function askSuggestion(el) {
+    document.getElementById('userInput').value = el.textContent;
+    sendMessage();
+  }
+
+  function appendUserMessage(text) {
+    const scroll = document.getElementById('chatScroll');
+    const intro = document.getElementById('introBlock');
+    if (intro) intro.style.display = 'none';
+
+    const row = document.createElement('div');
+    row.className = 'msg-row user';
+    row.innerHTML = `
+      <div class="avatar user">YOU</div>
+      <div class="bubble">${escapeHtml(text)}</div>
+    `;
+    scroll.appendChild(row);
+    scroll.scrollTop = scroll.scrollHeight;
+  }
+
+  function appendBotTyping() {
+    const scroll = document.getElementById('chatScroll');
+    const row = document.createElement('div');
+    row.className = 'msg-row bot';
+    row.id = 'typingRow';
+    row.innerHTML = `
+      <div class="avatar bot">AI</div>
+      <div class="bubble">
+        <div class="trace" id="traceBar">
+          <div class="trace-step" id="step1"><span class="trace-dot"></span>Security check</div>
+          <span class="trace-arrow">→</span>
+          <div class="trace-step" id="step2"><span class="trace-dot"></span>Retrieval</div>
+          <span class="trace-arrow">→</span>
+          <div class="trace-step" id="step3"><span class="trace-dot"></span>Generation</div>
+        </div>
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+      </div>
+    `;
+    scroll.appendChild(row);
+    scroll.scrollTop = scroll.scrollHeight;
+
+    setTimeout(() => document.getElementById('step1')?.classList.add('active'), 150);
+    setTimeout(() => document.getElementById('step2')?.classList.add('active'), 700);
+    setTimeout(() => document.getElementById('step3')?.classList.add('active'), 1300);
+  }
+
+  function appendBotMessage(answer, sourcesUsed, isBlocked) {
+    const typingRow = document.getElementById('typingRow');
+    if (typingRow) typingRow.remove();
+
+    const scroll = document.getElementById('chatScroll');
+    const row = document.createElement('div');
+    row.className = 'msg-row bot';
+
+    const traceHtml = isBlocked
+      ? `<div class="trace"><div class="trace-step warn-active"><span class="trace-dot"></span>Security check: blocked</div></div>`
+      : `<div class="trace"><div class="trace-step active"><span class="trace-dot"></span>Security passed</div><span class="trace-arrow">→</span><div class="trace-step active"><span class="trace-dot"></span>${sourcesUsed} sources retrieved</div></div>`;
+
+    row.innerHTML = `
+      <div class="avatar bot">AI</div>
+      <div class="bubble ${isBlocked ? 'blocked' : ''}">
+        ${traceHtml}
+        ${escapeHtml(answer)}
+        ${!isBlocked ? `<div class="meta-row"><span>📄 ${sourcesUsed} chunks used</span><span>·</span><span>Grounded response</span></div>` : ''}
+      </div>
+    `;
+    scroll.appendChild(row);
+    scroll.scrollTop = scroll.scrollHeight;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('userInput');
+    const question = input.value.trim();
+    if (!question) return;
+
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+    input.value = '';
+
+    appendUserMessage(question);
+    appendBotTyping();
+
+    queryCount++;
+    document.getElementById('queryCount').textContent = queryCount;
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question })
+      });
+      const data = await response.json();
+
+      const isBlocked = data.answer && data.answer.toLowerCase().includes("not able to process");
+      if (isBlocked) {
+        blockedCount++;
+        document.getElementById('blockedCount').textContent = blockedCount;
+      }
+
+      setTimeout(() => {
+        appendBotMessage(data.answer, data.sources_used || 0, isBlocked);
+      }, 1500);
+
+    } catch (err) {
+      setTimeout(() => {
+        appendBotMessage("⚠ Could not reach the API. Make sure the backend server is running.", 0, true);
+      }, 1500);
+    } finally {
+      setTimeout(() => { sendBtn.disabled = false; }, 1600);
+    }
+  }
+</script>
+
+</body>
+</html>
